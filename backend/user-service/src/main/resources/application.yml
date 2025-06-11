@@ -1,0 +1,33 @@
+# src/main/resources/application.yml
+server:
+  port: 8081 # Port untuk User Service
+
+spring:
+  application:
+    name: user-service # Nama aplikasi untuk Eureka
+  datasource:
+    url: jdbc:mysql://localhost:3306/user_service_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: Kal0ran. # Ganti dengan password MySQL Anda
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 'update' untuk pengembangan, 'validate' atau 'none' untuk produksi
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  cloud:
+    compatibility-verifier:
+      enabled: false # TAMBAHKAN INI SEMENTARA
+
+# JWT Properties
+app:
+  jwt-secret: S5hst8y4rsaCeMBbz3gmzntX8Hvj7eRv6h644lMrqCk= # Ganti dengan secret key yang kuat
+  jwt-expiration-milliseconds: 604800000 # 7 hari (7 * 24 * 60 * 60 * 1000 ms)
+
+# Eureka Client (jika menggunakan Service Discovery)
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka # URL Eureka Server Anda

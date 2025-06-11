@@ -1,0 +1,34 @@
+server:
+  port: 8080 # Port default untuk API Gateway (port ini akan diakses oleh frontend)
+
+spring:
+  application:
+    name: api-gateway # Nama service ini yang akan terdaftar di Eureka
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Mengaktifkan integrasi dengan Eureka Discovery Client
+          lower-case-service-id: true # Menggunakan service ID huruf kecil
+      routes:
+        # Route untuk User Service
+        - id: user-service
+          uri: lb://USER-SERVICE # lb:// untuk Load Balancing melalui Eureka Service ID
+          predicates:
+            - Path=/api/auth/**, /api/users/** # Semua request ke /api/auth/** dan /api/users/** akan diroute ke user-service
+
+        # Anda bisa menambahkan route untuk service lain di sini nanti
+        # - id: student-registration-service
+        #   uri: lb://STUDENT-REGISTRATION-SERVICE
+        #   predicates:
+        #     - Path=/api/students/**
+
+        # - id: organization-profile-service
+        #   uri: lb://ORGANIZATION-PROFILE-SERVICE
+        #   predicates:
+        #     - Path=/api/profile/**
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/ # URL Eureka Server Anda

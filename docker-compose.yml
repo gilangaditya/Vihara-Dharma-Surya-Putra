@@ -1,0 +1,22 @@
+version: '3.8' # Versi Docker Compose
+
+services:
+  mysql_db: # Nama service untuk MySQL
+    image: mysql:8 # Menggunakan image MySQL versi 8
+    container_name: vihara-mysql # Nama kontainer yang akan muncul di Docker Dashboard
+    environment:
+      MYSQL_ROOT_PASSWORD: Kal0ran. # Ganti dengan password yang kuat
+      MYSQL_DATABASE: user_service_db # Opsional: Membuat database default saat start
+    ports:
+      - "3306:3306" # Memetakan port 3306 host ke 3306 kontainer
+    volumes:
+      - mysql_data:/var/lib/mysql # Menyimpan data persisten agar tidak hilang saat kontainer direstart/dihapus
+    healthcheck: # Health check untuk memastikan MySQL siap menerima koneksi
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Define volumes for persistent data
+volumes:
+  mysql_data:
