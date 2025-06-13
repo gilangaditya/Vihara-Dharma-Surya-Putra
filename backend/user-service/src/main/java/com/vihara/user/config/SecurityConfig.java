@@ -1,53 +1,77 @@
-// src/main/java/com/vihara/user/config/SecurityConfig.java
 package com.vihara.user.config;
 
-import org.springframework.security.web.AuthenticationEntryPoint;
+import com.vihara.user.security.jwt.JwtAuthenticationEntryPoint;
 import com.vihara.user.security.jwt.AuthenticationFilter;
-
+import com.vihara.user.security.services.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationManager; // JANGAN HAPUS IMPORT INI
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; // JANGAN HAPUS IMPORT INI
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // JANGAN HAPUS IMPORT INI
+import org.springframework.security.crypto.password.PasswordEncoder; // JANGAN HAPUS IMPORT INI
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Untuk @PreAuthorize pada method
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final AuthenticationEntryPoint authenticationEntryPoint;
-    private final AuthenticationFilter authenticationFilter;
-    private final AuthenticationProvider authenticationProvider;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JwtAuthenticationEntryPoint unauthorizedHandler;
+    private final AuthenticationFilter authTokenFilter;
 
-    public SecurityConfig(AuthenticationEntryPoint authenticationEntryPoint,
-                          AuthenticationFilter authenticationFilter,
-                          AuthenticationProvider authenticationProvider) {
-        this.authenticationEntryPoint = authenticationEntryPoint;
-        this.authenticationFilter = authenticationFilter;
-        this.authenticationProvider = authenticationProvider;
+    // PasswordEncoder akan diinjeksikan dari ApplicationConfig
+    private final PasswordEncoder passwordEncoder; // Tambahkan injeksi ini
+
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService,
+                          JwtAuthenticationEntryPoint unauthorizedHandler,
+                          AuthenticationFilter authTokenFilter,
+                          PasswordEncoder passwordEncoder) { // Injeksi passwordEncoder
+        this.userDetailsService = userDetailsService;
+        this.unauthorizedHandler = unauthorizedHandler;
+        this.authTokenFilter = authTokenFilter;
+        this.passwordEncoder = passwordEncoder; // Set di constructor
     }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // Nonaktifkan CSRF untuk aplikasi stateless (REST API)
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint)) // Handle unauthorized access
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Gunakan session stateless
-            .authorizeHttpRequests(authorize ->
-                    authorize
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll() // Izinkan akses ke /api/auth/** (login, register) tanpa autentikasi
-                        .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll() // Contoh public API
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**").permitAll() // Untuk Swagger/OpenAPI
-                        .anyRequest().authenticated() // Semua permintaan lain harus diautentikasi
-            );
+    // ****** HAPUS @Bean passwordEncoder() DI SINI ******
+    // @Bean
+    // public PasswordEncoder passwordEncoder() {
+    //     return new BCryptPasswordEncoder();
+    // }
 
-        http.authenticationProvider(authenticationProvider);
-        http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class); // Tambahkan JWT filter sebelum filter username/password
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder); // Gunakan instance yang diinjeksikan
+        return authProvider;
+    }
+
+    // ****** HAPUS @Bean authenticationManager() DI SINI ******
+    // @Bean
+    // public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    //     return authConfig.getAuthenticationManager();
+    // }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/test/**").permitAll()
+                        .anyRequest().authenticated()
+                );
+
+        http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
