@@ -1,0 +1,43 @@
+server:
+  port: 8082 # Port untuk Profile Service
+
+spring:
+  application:
+    name: profile-service # Nama aplikasi untuk Eureka
+  datasource:
+    url: jdbc:mysql://localhost:3306/vihara_profile_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: Kal0ran. # Ganti dengan password MySQL Anda
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 'update' untuk pengembangan
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect # Pastikan ini ada
+  cloud:
+    compatibility-verifier:
+      enabled: false # TAMBAHKAN INI SEMENTARA
+
+# JWT Properties
+app:
+  jwt-secret: S5hst8y4rsaCeMBbz3gmzntX8Hvj7eRv6h644lMrqCk= # secret key
+  jwt-expiration-milliseconds: 604800000 # 7 hari (7 * 24 * 60 * 60 * 1000 ms)
+
+
+# Eureka Client (Service Discovery)
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka # URL Eureka Server Anda
+
+logging: # Aktifkan debug logging untuk mempermudah debugging
+  level:
+    root: INFO # Bisa diubah ke DEBUG jika diperlukan
+    org.springframework.web: INFO
+    com.vihara.profile: DEBUG # Aktifkan DEBUG untuk package aplikasi Anda
+    org.hibernate: INFO
+    org.springframework.cloud: INFO
+    org.springframework.security: DEBUG # Jika nanti ada security di profile service

@@ -17,6 +17,12 @@ spring:
           predicates:
             - Path=/api/auth/**, /api/users/** # Semua request ke /api/auth/** dan /api/users/** akan diroute ke user-service
 
+        # Route untuk Profile Service
+        - id: profile-service # Routing BARU untuk Profile Service
+          uri: lb://PROFILE-SERVICE # lb:// untuk Load Balancing melalui Eureka Service ID
+          predicates:
+            - Path=/api/profile-vihara/** # Semua permintaan ke /api/profile akan dirutekan ke profile-service
+
         # Anda bisa menambahkan route untuk service lain di sini nanti
         # - id: student-registration-service
         #   uri: lb://STUDENT-REGISTRATION-SERVICE
